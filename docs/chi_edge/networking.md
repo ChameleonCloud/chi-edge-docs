@@ -118,7 +118,7 @@ We start with the assumption that Local IP 1 and Local IP 2 can communicate dire
 |  Pod1a 192.168.71.10 |   "outside" 10.8.8.8      | SNAT + Routed |
 
 
-### What if our hosts *can't* talk directly?
+### What if our hosts *can't* talk directly? (Router Cluster Net)
 
 We may have a more complicated setup, where extra work is needed for hosts to communicate between their local-ips.
 
@@ -149,7 +149,7 @@ since the default route will handle sending from 172.16.10.10 -> 10.8.10.10 and 
 However, we can no longer simply route traffic from pods on host1 to pods on host2, the router will have no idea what to do with a destination address of 192.168.11.1, as it doesn't have a route for it. To work around this, Calico can be configured to apply ip-ip or vxlan encapsulaton to the pod traffic before sending it to the router, and the destination host will de-encapsulate it upon recepit.
 
 
-### Or if they're in really difficult places?
+### Or if they're in really difficult places? (Wireguard Cluster Net)
 
 One of our common deployment scenarios is "put a kubernetes host on someone's home router, behind NAT and a firewall, and make this all work anyway.
 To do this, we replace the conceptual "cluster network" with a wireguard-based underlay network.
@@ -212,7 +212,7 @@ Looking at the routing table, we see that regular "outbound" traffic doesn't dep
 An unfortunate downside of this architecture is that devices that are locally connected can't take advantage of this short path, and still send traffic "the long way" via the hub port.
 
 
-### Connecting them together
+### Connecting them together (Openstack Floating IPs with Calico Net)
 
 TODO: needs documentation of neutron-calico-connect script
 
