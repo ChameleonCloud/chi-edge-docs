@@ -214,35 +214,63 @@ An unfortunate downside of this architecture is that devices that are locally co
 
 ### Connecting them together (Openstack Floating IPs with Calico Net)
 
-TODO: needs documentation of neutron-calico-connect script
+From what we've gone through above, we arrive at the following requirements:
+
+1. Neutron needs to have its own, neutron-managed subnet in order to have a "fixed_ip" for floating IPs
+2. This subnet must == the calico IPPool, so that we can use any PodCIDR as a fixed_ip
+3. But, neutron will want to route traffic to this subnet directly, and we know this won't work.
+   1. Neutron doesn't know to use the kuberneres local-ips as nexthops for each PodCidr
+
+To solve this, we first realize that each system running calico on it *does* know how to route to all of the PodCIDRs, and this includes our Openstack controller node (since it's running a k3s server too). We just need to get the traffic out of the neutron router namespace, and into the host namespace where those routes are.
+
+We accomplish this in a few steps:
+
+First, create a veth-pair, and add one half to the router namespace, establishing a layer 2 connection from the router NS into the host NS.
+Second, configure IP addresses on both ends of the veth-pair, so that we can route across it.
+And finally, remove neutron's existing route for caliconet, instead use the "host" end of our veth-pair as the next-hop.
+
 
 ```mermaid
-flowchart LR
 
-    neutron-router((Neutron \n Router))
+flowchart TD
+  
+    external-iface-public-- L2 --- qg-public
 
-    subgraph public network
-        public-subnet[public subnet: \n 172.18.200.0/24]
+    subgraph qrouter-ns
+        iptables((L3 Routing))
+        iptables --- qg-public[qg-8dc90a57-79: \n public IP]
+        iptables --- qr-caliconet[qr-caliconet: 192.168.0.1/16]
+        iptables --- veth-caliN[veth-caliN: \n 192.168.150.2/30]
     end
-
-    subgraph caliconet network
-        direction TB
-        
-        subgraph calico-subnet[calico subnet: 192.168.0.0/16]
-            calico-node((calico bgp \n routing))
-            calico-node-- 192.168.1.1/24 --- node1-cidr[192.168.1.0/24]
-            calico-node-- 192.168.2.1/24 --- node2-cidr[192.168.2.0/24]
-            calico-node-- 192.168.N.1/24 --- node3-cidr[192.168.N.0/24]
-        end
-        
+    veth-caliN-- routes to 192.168.0.0/16 via --- veth-cali0[veth-cali0 \n 192.168.150.1/30]
+    subgraph host-ns
+        veth-cali0-- routes to --- server1[k3s server IP 172.18.0.4]-- routes to ---podcidr1[pod cidr: 192.168.25.0/24]
+        veth-cali0-- routes to --- server2[k3s server IP 172.18.0.8]-- routes to ---podcidr2[pod cidr: 192.168.26.0/24]
     end
-
-    public-subnet-- 172.18.200.2/24 --- neutron-router
-    neutron-router-- N:192.168.0.1/16 \n C:192.168.0.2/16 --- calico-node
 ```
 
-All neutron "sees" is that some addresses in the "calico-subnet" send traffic, respond to messages, and so on.
-Calico's BGP routing handles getting ipv4 traffic from neutron to the actual destination, which may traverse multiple kubnernetes nodes before reaching a container.
+Now, when neutron sends traffic to addresses in 192.168.0.0/16 (both the neutron subnet cidr and the kubernetes cluster CIDR), it will first be sent to 192.168.150.1 in the host NS. There, Calico has alreday populated routes to each of the PodCIDRs, and traffic will be sent to the appropriate next-hop.
+
+We have one remaining issue: As mentioned above, "DNAT" on traffic arriving via floating IPs, so when the packets arrive at the calico local-ip, they will have `source_address=remote`, `dest_address=fixed_ip`, and this will get routed correctly to the pod. But, the reply won't come back using the same path. Calico will use its existing routes for the `remote` address, being somewhere on hte internet, instead of sending traffic back through neutron where SNAT would have been applied. The remote host will see two very different source addresses, and this breaks the majority of two-way communication.
+
+To address this, ideally we would inject routes into calico for each neutron floating IP, but this was not straightforward at the time of writing. Instead, we add an additional SNAT rule to the neutron router, such that packets are sent to calico with `source_address=veth-router`, instead of `remote`. Calico knows that the veth-pair's subnet is on the controller node, and so reply traffic is sent back along this path.
+
+Instead of the first sequence, now it looks like this:
+
+```mermaid
+sequenceDiagram
+    remote->>qg_iface: source=remote dest=floating_ip
+    qg_iface->>veth-router: DNAT+SNAT: source=veth-router dest=fixed_ip
+    veth-router->>veth-host: source=veth-router dest=fixed_ip
+    veth-host->>calico-local-ip: source=veth-router dest=fixed_ip
+
+    calico-local-ip->>veth-host: source=fixed_ip dest=veth-router
+    veth-host->>veth-router: source=fixed_ip dest=veth-router
+    veth-router->>qg_iface: DNAT+SNAT source=floating_ip dest=remote
+    qg_iface->>remote: source=floating_ip dest=remote
+    
+```
+
 
 ## Configuration
 
