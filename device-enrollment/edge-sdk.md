@@ -57,7 +57,7 @@ Device names must be unique across the testbed; this is another reason why prefi
   * `raspberrypi5`
   * `jetson-nano`
   * `jetson-xavier-nx-emmc`&#x20;
-  * `jetson-orin-nano`
+  * `jetson-orin-nano-devkit-nvme`
   * `jetson-agx-orin-devkit-64gb`
 * **Contact email**: this will be used if testbed operators would like to contact you about your device (e.g., to report power failure or disconnection of significant duration.)
 
@@ -197,7 +197,7 @@ The Xavier NX is less "user-friendly", we recommend using an external nvme drive
 
 #### Image the Orin Nano or AGX Orin
 
-For these devices, the base image is a "flasher" type. Use an imaging tool to write the "baked" image to a usb drive. Insert the drive into the Orin device. The Orin should boot off of the USB, and write the image from the USB drive onto internal storage, either eMMC or NVMe.
+For these devices, the base image is a "flasher" type. Use an imaging tool to write the "baked" image to a USB drive. Insert the drive into the Orin device. The Orin will boot from the USB drive and write the OS image onto the device's internal NVMe storage. Once flashing completes, remove the USB drive and reboot.
 {% endtab %}
 
 {% tab title="Google Coral (alpha)" %}

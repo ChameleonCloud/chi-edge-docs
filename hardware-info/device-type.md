@@ -4,12 +4,14 @@
 
 This page details the Single Board Computers (SBCs) available for edge computing experiments. These devices serve as the primary compute nodes and hosts for peripherals.
 
-| machine\_name (for reservation) | Description                                 |
-| ------------------------------- | ------------------------------------------- |
-| raspberrypi5                    | Raspberry Pi 5, all variants                |
-| raspberrypi4-64                 | Raspberry Pi 4, all variants, including CM4 |
-| jetson-nano                     | Nvidia Jetson Nano                          |
-| jetson-xavier-nx-devkit-emmc    | Nvidia Jetson Xavier NX                     |
+| machine\_name (for reservation) | Description                                  |
+| ------------------------------- | -------------------------------------------- |
+| raspberrypi5                    | Raspberry Pi 5, all variants                 |
+| raspberrypi4-64                 | Raspberry Pi 4, all variants, including CM4  |
+| jetson-nano                     | Nvidia Jetson Nano                           |
+| jetson-xavier-nx-devkit-emmc    | Nvidia Jetson Xavier NX                      |
+| jetson-orin-nano-devkit-nvme    | Nvidia Jetson Orin Nano Developer Kit (NVMe) |
+| jetson-agx-orin-devkit-64gb     | Nvidia Jetson AGX Orin 64GB Developer Kit    |
 
 ## Hardware Details
 
@@ -46,7 +48,7 @@ This page details the Single Board Computers (SBCs) available for edge computing
 
 * [https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-nano/product-development/](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-nano/product-development/)
 
-Please note! The latest Nvidia software supported on the Jetson Nano is:
+The latest Nvidia software supported on the Jetson Nano is:
 
 * [JetPack 4.6.6](https://developer.nvidia.com/jetpack-sdk-466)
 * [L4T 32.7.6](https://developer.nvidia.com/embedded/linux-tegra-r3276)
@@ -63,41 +65,55 @@ The NVIDIA SDK for these devices is unfortunately end-of-life, and we are rollin
 
 * [https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-xavier-series/](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-xavier-series/)
 
-Please note! The latest Nvidia software supported on the Xavier NX is:
+The latest Nvidia software supported on the Xavier NX is:
 
-* [JetPack 5.1.6](https://developer.nvidia.com/embedded/jetpack-sdk-516)
-* [L4T 35.6.4](https://developer.nvidia.com/embedded/jetson-linux-r3564)
+* [JetPack 4.6.6](https://developer.nvidia.com/jetpack-sdk-466)
+* [L4T 32.7.6](https://developer.nvidia.com/embedded/linux-tegra-r3276)
 
-This is based on Ubuntu 20.04, and Linux Kernel 5.10.
+This is based on Ubuntu 18.04, Linux Kernel 4.9, and [**CUDA 10.2**](https://docs.nvidia.com/cuda/archive/10.2/cuda-toolkit-release-notes/index.html#title-new-features).
 
-They currently package **CUDA 11.8**. Please use containers targeting this release for now.
+**You must use a container image targeting CUDA 10.2 to work on these devices.**
 
-We are investigating whether they can be upgraded to CUDA12.2, but this is not yet supported on CHI@Edge.
+Support for these is limited, as NVIDIA considers them EoL. The replacement is the AGX Orin and Orin Nano, described below.
 
-Support for these is limited, as NVIDIA considers them EoL.
-
-### Jetson AGX Orin (coming soon)
-
-<div align="left"><figure><img src="../.gitbook/assets/image (6).png" alt="" width="375"><figcaption></figcaption></figure></div>
-
-* [https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-xavier-series/](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-xavier-series/)
-
-The AGX Orin is currently suported by NVIDIA, we are working to roll out access to a 64GB dev kit.
-
-### Jetson Orin Nano (coming soon)
+### Jetson Orin Nano Developer Kit
 
 <div align="left"><figure><img src="../.gitbook/assets/image (7).png" alt="" width="563"><figcaption></figcaption></figure></div>
 
 * [https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/)
 * [https://nvdam.widen.net/s/zkfqjmtds2/jetson-orin-datasheet-nano-developer-kit-3575392-r2](https://nvdam.widen.net/s/zkfqjmtds2/jetson-orin-datasheet-nano-developer-kit-3575392-r2)
 
-The Orin Nano is the current offering from Nvidia, replacing the Jetson Nano.
+The Orin Nano is Nvidia's current offering, replacing the Jetson Nano. CHI@Edge images target the NVMe variant of the developer kit (`jetson-orin-nano-devkit-nvme`);
 
-We have two of these under test, and will update once they're generally available.
+The Nvidia software supported on the Orin Nano is:
 
-We are working to get other Orin variants in the pipeline, but don't have an ETA at this time.
+* JetPack 6.x
+* L4T r36.4
+* **CUDA 12.6**
+
+This is based on Ubuntu 22.04. The Orin Nano is currently running in the original (non-Super) power profile.
+
+Container images must target **CUDA 12.6** (or compatible) and `linux/arm64`.
+
+### Jetson AGX Orin 64GB Developer Kit
+
+<div align="left"><figure><img src="../.gitbook/assets/image (6).png" alt="" width="375"><figcaption></figcaption></figure></div>
+
+* [https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/)
+* [Jetson AGX Orin Developer Kit datasheet](https://developer.nvidia.com/embedded/downloads)
+
+The AGX Orin is the high-end Orin-series board. CHI@Edge currently supports the 64GB developer kit (`jetson-agx-orin-devkit-64gb`).
+
+The Nvidia software supported on the AGX Orin is:
+
+* JetPack 6.x
+* L4T r36.4
+* **CUDA 12.6**
+
+This is based on Ubuntu 22.04.
+
+Container images must target **CUDA 12.6** (or compatible) and `linux/arm64`.
 
 ## Hardware Summary Table
 
-<table data-full-width="true"><thead><tr><th>Device Name</th><th width="117.265625">CPU</th><th>Memory</th><th>GPU Arch</th><th>AI Perf [1]</th><th>Power (TDP)</th></tr></thead><tbody><tr><td><strong>Raspberry Pi 4B</strong></td><td>4c A72 <br>@ 1.8GHz</td><td>8GB LPDDR4<br>13.3 GB/s</td><td>VideoCore VI</td><td></td><td>3W - 7W</td></tr><tr><td><strong>Raspberry Pi 5</strong></td><td>4c A76<br>@ 2.4GHz</td><td>8GB LPDDR4x<br>27.3 GB/s</td><td>VideoCore VII</td><td></td><td>5W - 12W</td></tr><tr><td><strong>Jetson Nano</strong></td><td>4c A57<br>@ 1.43GHz</td><td>4GB LPDDR4<br>25.6 GB/s</td><td>Maxwell (128c)</td><td>472 GFLOPS</td><td>5W - 10W</td></tr><tr><td><strong>Jetson Xavier NX</strong></td><td>6c Carmel v8.2</td><td>8GB LPDDR4x<br>59.7 GB/s</td><td>Volta (384c+48T)</td><td>21 TOPS (Dense, Int8)</td><td>10W - 20W</td></tr></tbody></table>
-
+<table data-full-width="true"><thead><tr><th>Device Name</th><th width="117.265625">CPU</th><th>Memory</th><th>GPU Arch</th><th>AI Perf [1]</th><th>Power (TDP)</th></tr></thead><tbody><tr><td><strong>Raspberry Pi 4B</strong></td><td>4c A72 <br>@ 1.8GHz</td><td>8GB LPDDR4<br>13.3 GB/s</td><td>VideoCore VI</td><td></td><td>3W - 7W</td></tr><tr><td><strong>Raspberry Pi 5</strong></td><td>4c A76<br>@ 2.4GHz</td><td>8GB LPDDR4x<br>27.3 GB/s</td><td>VideoCore VII</td><td></td><td>5W - 12W</td></tr><tr><td><strong>Jetson Nano</strong></td><td>4c A57<br>@ 1.43GHz</td><td>4GB LPDDR4<br>25.6 GB/s</td><td>Maxwell (128c)</td><td>472 GFLOPS</td><td>5W - 10W</td></tr><tr><td><strong>Jetson Xavier NX</strong></td><td>6c Carmel v8.2</td><td>8GB LPDDR4x<br>59.7 GB/s</td><td>Volta (384c+48T)</td><td>21 TOPS (Dense, Int8)</td><td>10W - 20W</td></tr><tr><td><strong>Jetson Orin Nano (Dev Kit)</strong></td><td>6c A78AE<br>@ 1.5GHz</td><td>8GB LPDDR5<br>68 GB/s</td><td>Ampere (1024c + 32T)</td><td>40 TOPS (Sparse, Int8)</td><td>7W - 15W</td></tr><tr><td><strong>Jetson AGX Orin 64GB</strong></td><td>12c A78AE<br>@ 2.2GHz</td><td>64GB LPDDR5<br>204.8 GB/s</td><td>Ampere (2048c + 64T)</td><td>275 TOPS (Sparse, Int8)</td><td>15W - 60W</td></tr></tbody></table>
